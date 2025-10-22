@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Security -->
+    <!-- Run queries as Hive user, not impersonated end-user -->
+    <property>
+        <name>hive.server2.enable.doAs</name>
+        <value>false</value>
+    </property>
+
+    <!-- Tez Execution Engine -->
+    <!-- local = dev mode, yarn = cluster -->
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+    <!-- true = local JVM, false = distributed -->
+    <property>
+        <name>tez.local.mode</name>
+        <value>false</value>
+    </property>
+    <!-- Progress updates from Tez -->
+    <property>
+        <name>hive.tez.exec.inplace.progress</name>
+        <value>false</value>
+    </property>
+    <!-- Run local tasks in same JVM -->
+    <property>
+        <name>hive.exec.submit.local.task.via.child</name>
+        <value>false</value>
+    </property>
+    <!-- Summary progress -->
+    <property>
+        <name>hive.tez.exec.print.summary</name>
+        <value>true</value>
+    </property>
+    <!-- Optimize local data fetch -->
+    <property>
+        <name>tez.runtime.optimize.local.fetch</name>
+        <value>true</value>
+    </property>
+    <!-- I dont know :> -->
+    <property>
+        <name>hive.compactor.worker.threads</name>
+        <value>1</value>
+    </property>
+
+    <!-- Location in HDFS where Tez jars were copied -->
+    <property>
+        <name>tez.lib.uris</name>
+        <value>hdfs:///apps/apache-tez-0.10.5-bin.tar.gz</value>
+    </property>
+    <!-- <property>
+        <name>tez.lib.uris</name>
+        <value>${fs.defaultFS}/apps/tez-0-10-1,${fs.defaultFS}/apps/tez-0-10-1/lib</value>
+    </property>
+    <property>
+        <name>tez.use.cluster.hadoop-libs</name>
+        <value>true</value>
+    </property> -->
+
+    <!-- Storage & Metadata -->
+    <!-- Default table storage location -->
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/user/hive/warehouse</value>
+    </property>
+    <!-- Temp working directory -->
+    <property>
+        <name>hive.exec.scratchdir</name>
+        <value>/tmp/hive/scratch</value>
+    </property>
+    <!-- Store UDFs/jars -->
+    <property>
+        <name>hive.user.install.directory</name>
+        <value>/tmp/hive/udfs</value>
+    </property>
+    <!-- Disable event notification auth (dev mode) -->
+    <property>
+        <name>hive.metastore.event.db.notification.api.auth</name>
+        <value>false</value>
+    </property>
+</configuration>

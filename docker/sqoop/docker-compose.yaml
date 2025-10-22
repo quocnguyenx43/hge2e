@@ -1,0 +1,17 @@
+networks:
+  hg-e2e:
+    external: true
+
+services:
+  sqoop:
+    build:
+      context: .
+    container_name: sqoop
+    hostname: sqoop
+    env_file:
+      - .env
+    volumes:
+      - ./jobs/:/jobs/
+    command: /bin/bash -c "chmod +x /jobs/postgres_import.sh && /jobs/postgres_import.sh && tail -f /dev/null"
+    networks:
+      - hg-e2e

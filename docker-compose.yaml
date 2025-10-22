@@ -1,0 +1,166 @@
+networks:
+  hg-e2e:
+    external: true
+
+volumes:
+  pg-oltp-data:
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=hg-e2e
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - pg-oltp-data:/var/lib/postgresql/data
+      - ./scripts/oltp/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./scripts/oltp/02-customer-activity.sql:/docker-entrypoint-initdb.d/02-customer-activity.sql
+      - ./scripts/oltp/03-device-event.sql:/docker-entrypoint-initdb.d/03-device-event.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+    networks:
+      - hg-e2e
+
+  namenode:
+    image: apache/hadoop:3.4.1
+    container_name: namenode
+    hostname: namenode
+    user: root
+    environment:
+      - CLUSTER_NAME=hge2e
+      - HDFS_ONLY=false
+    volumes:
+      - ./conf/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./conf/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./conf/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml
+      - ./conf/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml
+      - ./conf/hadoop/workers:/opt/hadoop/etc/hadoop/workers
+      - ./scripts/hadoop/init-namenode.sh:/init-namenode.sh
+      - ./data/nameNode:/data/dfs/nameNode
+    ports:
+      - 9870:9870     # HDFS NameNode Web UI
+      - 8088:8088     # YARN ResourceManager Web UI
+      - 19888:19888   # MapReduce JobHistory Web UI
+    command: /bin/bash /init-namenode.sh
+    networks:
+      - hg-e2e
+
+  secondarynamenode:
+    image: apache/hadoop:3.4.1
+    container_name: secondarynamenode
+    hostname: secondarynamenode
+    user: root
+    environment:
+      - CLUSTER_NAME=hge2e
+      - HDFS_ONLY=false
+    volumes:
+      - ./conf/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./conf/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./conf/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml
+      - ./conf/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml
+      - ./conf/hadoop/workers:/opt/hadoop/etc/hadoop/workers
+      - ./scripts/hadoop/init-secondarynamenode.sh:/init-secondarynamenode.sh
+      - ./data/secondaryNameNode:/data/dfs/secondaryNameNode
+      - ./data/dataNode1:/data/dfs/dataNode
+    depends_on:
+      - namenode
+    ports:
+      - 9868:9868     # HDFS SecondaryNameNode Web UI
+      - 9864:9864     # HDFS DataNode Web UI
+      - 8042:8042     # YARN NodeManager Web UI
+    command: /bin/bash /init-secondarynamenode.sh
+    networks:
+      - hg-e2e
+
+  datanode:
+    image: apache/hadoop:3.4.1
+    container_name: datanode
+    hostname: datanode
+    user: root
+    environment:
+      - CLUSTER_NAME=hge2e
+      - HDFS_ONLY=false
+    volumes:
+      - ./conf/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./conf/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./conf/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml
+      - ./conf/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml
+      - ./conf/hadoop/workers:/opt/hadoop/etc/hadoop/workers
+      - ./scripts/hadoop/init-datanode.sh:/init-datanode.sh
+      - ./data/dataNode2:/data/dfs/dataNode
+    ports:
+      - 9865:9864     # HDFS DataNode Web UI
+      - 8043:8042     # YARN NodeManager Web UI
+    depends_on:
+      - namenode
+    command: /bin/bash /init-datanode.sh
+    networks:
+      - hg-e2e
+
+  metastore:
+    image: apache/hive:4.1.0
+    container_name: metastore
+    hostname: metastore
+    user: root
+    environment:
+      - SERVICE_NAME=metastore
+    ports:
+      - "9083:9083"   # Thrift Metastore API
+    volumes:
+      - ./conf/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./conf/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./conf/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml
+      - ./conf/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml
+      - ./conf/hadoop/workers:/opt/hadoop/etc/hadoop/workers
+      - ./scripts/hive/entrypoint.sh:/entrypoint.sh
+      # - ./conf/hive/hive-site.xml:/opt/hive/conf/hive-site.xml
+    command: /bin/bash /entrypoint.sh
+    networks:
+      - hg-e2e
+
+  hiveserver2:
+    image: apache/hive:4.1.0
+    container_name: hiveserver2
+    hostname: hiveserver2
+    user: root
+    environment:
+      - SERVICE_NAME=hiveserver2
+      - SERVICE_OPTS=-Dhive.metastore.uris=thrift://metastore:9083
+      - IS_RESUME=true
+    ports:
+      - "10000:10000"  # JDBC/Beeline
+      - "10002:10002"  # WebUI
+    volumes:
+      - ./conf/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./conf/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./conf/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml
+      - ./conf/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml
+      - ./conf/hadoop/workers:/opt/hadoop/etc/hadoop/workers
+      - ./scripts/hive/entrypoint.sh:/entrypoint.sh
+      # - ./conf/hive/hive-site.xml:/opt/hive/conf/hive-site.xml
+    depends_on:
+      - namenode
+      - secondarynamenode
+      - datanode
+      - metastore
+    command: /bin/bash /entrypoint.sh
+    networks:
+      - hg-e2e
+
+# events: login events, messaging events, search events,...
+# {
+# 	used_id,
+# 	occurred_at,
+# 	event_type,
+# 	event_name
+# 	location
+# 	device
+# }

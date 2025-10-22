@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+    <!-- Cluster ID / Name -->
+    <property>
+        <name>dfs.nameservices</name>
+        <value>${CLUSTER_NAME}</value>
+    </property>
+
+    <!-- Replication Factor -->
+    <property>
+        <name>dfs.replication</name>
+        <value>1</value>
+    </property>
+
+    <!-- Name Node -->
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>file:///data/dfs/nameNode</value>
+    </property>
+
+    <!-- Data Node -->
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>file:///data/dfs/dataNode</value>
+    </property>
+
+    <!-- Secondary Name Node -->
+    <property>
+        <name>dfs.namenode.checkpoint.dir</name>
+        <value>file:///data/dfs/secondaryNameNode</value>
+    </property>
+
+    <!-- Disable IP/hostname check (useful for Docker) -->
+    <property>
+        <name>dfs.namenode.datanode.registration.ip-hostname-check</name>
+        <value>false</value>
+    </property>
+
+    <!-- Permissions -->
+    <property>
+        <name>dfs.permissions.enabled</name>
+        <value>false</value>
+    </property>
+    <property>
+        <name>dfs.permissions</name>
+        <value>false</value>
+    </property>
+
+    <!-- Enable WebHDFS (REST API) -->
+    <property>
+        <name>dfs.webhdfs.enabled</name>
+        <value>true</value>
+    </property>
+
+    <!-- Default RPC service for clients -->
+    <!-- <property>
+        <name>dfs.namenode.rpc-address</name>
+        <value>namenode:9000</value>
+    </property> -->
+</configuration>
