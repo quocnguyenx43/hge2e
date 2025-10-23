@@ -1,0 +1,45 @@
+networks:
+  hg-e2e:
+    external: true
+
+volumes:
+  pg-oltp-data:
+
+services:
+  # Simulated OLTP Database (Postgres)
+  oltp-postgres:
+    image: postgres:17
+    container_name: oltp-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - pg-oltp-data:/var/lib/postgresql/data
+      - ./scripts/oltp/01-create-tables.sql:/docker-entrypoint-initdb.d/01-create-tables.sql
+      - ./scripts/oltp/02-sample-data.sql:/docker-entrypoint-initdb.d/02-sample-data.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "oltp"]
+      interval: 10s
+      start_period: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - hg-e2e
+
+  # Simulated OLTP Backend Service
+  oltp-backend:
+    build:
+      context: ./src/oltp_backend
+      dockerfile: Dockerfile
+    container_name: oltp-backend
+    env_file:
+      - ./src/oltp_backend/.env
+    depends_on:
+      - oltp-postgres
+    restart: unless-stopped
+    networks:
+      - hg-e2e

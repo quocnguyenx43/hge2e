@@ -1,0 +1,36 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Logs and temp files
+*.log
+logs/
+tmp/
+*.sqlite3
+
+# Git & IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Local config files
+.env
+*.bak
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Cache / build
+__pycache__/
+*.egg-info/
+build/
+dist/

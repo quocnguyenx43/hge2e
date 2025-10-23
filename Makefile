@@ -1,52 +1,58 @@
-default: up
+# Declare all phony targets
+.PHONY: init oltp 
 
+# Configuration
+OLTP_COMPOSE_FILE := docker-compose.oltp.yaml
+HADOOP_COMPOSE_FILE := docker-compose.hadoop.yaml
+SPARK_COMPOSE_FILE := docker-compose.spark.yaml
+HIVE_COMPOSE_FILE := docker-compose.hive.yaml
+TRINO_COMPOSE_FILE := docker-compose.trino.yaml
+SUPERSET_COMPOSE_FILE := docker-compose.superset.yaml
+COMPOSE_BAKE := COMPOSE_BAKE=true
+PYTHON := python3
+
+# Using shared network accross all services
 init:
 	docker network create hg-e2e
 
+# ====== Up Targets ======
 oltp:
-	docker compose -f ./docker-compose.yaml up -d postgres
-
-oltp-down:
-	docker compose -f ./docker-compose.yaml down -v postgres
+	$(COMPOSE_BAKE) docker compose -f $(OLTP_COMPOSE_FILE) up -d --build
 
 hadoop:
-	docker compose -f ./docker-compose.yaml up -d
+	$(COMPOSE_BAKE) docker compose -f $(HADOOP_COMPOSE_FILE) up -d --build
+
+spark:
+	$(COMPOSE_BAKE) docker compose -f $(SPARK_COMPOSE_FILE) up -d --build
+
+hive:
+	$(COMPOSE_BAKE) docker compose -f $(HIVE_COMPOSE_FILE) up -d --build
+
+trino:
+	$(COMPOSE_BAKE) docker compose -f $(TRINO_COMPOSE_FILE) up -d --build
+
+superset:
+	$(COMPOSE_BAKE) docker compose -f $(SUPERSET_COMPOSE_FILE) up -d --build
+
+# ====== Down Targets ======
+oltp-down:
+	docker compose -f $(OLTP_COMPOSE_FILE) down -v
 
 hadoop-down:
-	docker compose -f ./docker-compose.yaml down -v
+	docker compose -f $(HADOOP_COMPOSE_FILE) down -v
 
-sqoop:
-	docker compose -f ./docker-compose.yaml up -d
+spark-down:
+	docker compose -f $(SPARK_COMPOSE_FILE) down -v
 
-sqoop-down:
-	docker compose -f ./docker-compose.yaml down -v
+hive-down:
+	docker compose -f $(HIVE_COMPOSE_FILE) down -v
 
-up: init postgres-down hadoop sqoop
+trino-down:
+	docker compose -f $(TRINO_COMPOSE_FILE) down -v
 
-down: postgres-down hadoop-down sqoop-down
+superset-down:
+	docker compose -f $(SUPERSET_COMPOSE_FILE) down -v
 
+# ====== Clean Targets ======
 distclean:
-	find . -type d -name ".venv" -exec rm -rf {} +
-
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type d -name "*.egg-info" -exec rm -rf {} +
-	find . -type d -name ".pytest_cache" -exec rm -rf {} +
-	find . -type d -name ".mypy_cache" -exec rm -rf {} +
-	find . -type d -name ".ruff_cache" -exec rm -rf {} +
-
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete
-	find . -type f -name "*.pyd" -delete
-	find . -type f -name "*.coverage" -delete
-	find . -type f -name ".coverage.*" -delete
-
-	find ./data/nameNode -mindepth 1 ! -name '.gitkeep' -delete
-	find ./data/secondaryNameNode -mindepth 1 ! -name '.gitkeep' -delete
-	find ./data/dataNode1 -mindepth 1 ! -name '.gitkeep' -delete
-	find ./data/dataNode2 -mindepth 1 ! -name '.gitkeep' -delete
-
-.PHONY: postgres postgres-down \
-		hadoop hadoop-down \
-		sqoop sqoop-down \
-		up down \
-		distclean
+	chmod +x ./distclean.sh && ./distclean.sh

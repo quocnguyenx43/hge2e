@@ -57,6 +57,6 @@
     <!-- Default RPC service for clients -->
     <!-- <property>
         <name>dfs.namenode.rpc-address</name>
-        <value>namenode:9000</value>
+        <value>hadoop-namenode:9000</value>
     </property> -->
 </configuration>

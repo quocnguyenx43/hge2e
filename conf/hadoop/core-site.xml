@@ -6,6 +6,6 @@
     <!-- Replace this with container name -->
     <property>
         <name>fs.defaultFS</name>
-        <value>hdfs://namenode:9000</value>
+        <value>hdfs://hadoop-namenode:9000</value>
     </property>
 </configuration>

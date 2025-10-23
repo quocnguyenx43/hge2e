@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <!-- Security -->
+
     <!-- Run queries as Hive user, not impersonated end-user -->
     <property>
         <name>hive.server2.enable.doAs</name>
@@ -8,15 +9,16 @@
     </property>
 
     <!-- Tez Execution Engine -->
+
     <!-- local = dev mode, yarn = cluster -->
     <property>
         <name>mapreduce.framework.name</name>
-        <value>yarn</value>
+        <value>local</value>
     </property>
     <!-- true = local JVM, false = distributed -->
     <property>
         <name>tez.local.mode</name>
-        <value>false</value>
+        <value>true</value>
     </property>
     <!-- Progress updates from Tez -->
     <property>
@@ -45,10 +47,12 @@
     </property>
 
     <!-- Location in HDFS where Tez jars were copied -->
-    <property>
+    <!-- Use in case of distributing jobs: YARN -->
+
+    <!-- <property>
         <name>tez.lib.uris</name>
         <value>hdfs:///apps/apache-tez-0.10.5-bin.tar.gz</value>
-    </property>
+    </property> -->
     <!-- <property>
         <name>tez.lib.uris</name>
         <value>${fs.defaultFS}/apps/tez-0-10-1,${fs.defaultFS}/apps/tez-0-10-1/lib</value>
@@ -59,10 +63,11 @@
     </property> -->
 
     <!-- Storage & Metadata -->
+
     <!-- Default table storage location -->
     <property>
         <name>hive.metastore.warehouse.dir</name>
-        <value>/user/hive/warehouse</value>
+        <value>/data/warehouse</value>
     </property>
     <!-- Temp working directory -->
     <property>

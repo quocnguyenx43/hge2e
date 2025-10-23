@@ -1,0 +1,78 @@
+# Hadoop Cluster (contains HDFS and YARN)
+networks:
+  hg-e2e:
+    external: true
+
+volumes:
+  namenode-data:
+  secondary-namenode-data:
+  datanode1-data:
+  datanode2-data:
+
+x-hadoop-common: &hadoop-common
+  image: apache/hadoop:3.4.1
+  user: root
+  environment:
+    - CLUSTER_NAME=${CLUSTER_NAME}
+    - HDFS_ONLY=${HDFS_ONLY}
+  networks:
+    - hg-e2e
+
+services:
+  hadoop-namenode:
+    <<: *hadoop-common
+    container_name: hadoop-namenode
+    hostname: hadoop-namenode
+    volumes:
+      - ./conf/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./conf/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./conf/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml
+      - ./conf/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml
+      - ./conf/hadoop/workers:/opt/hadoop/etc/hadoop/workers
+      - ./scripts/hadoop/:/scripts/
+      - namenode-data:/data/dfs/nameNode
+    ports:
+      - "9870:9870"     # HDFS NameNode Web UI
+      - "8088:8088"     # YARN ResourceManager Web UI
+      - "19888:19888"   # MapReduce JobHistory Web UI
+    command: ["/bin/bash", "/scripts/hadoop-init-namenode.sh"]
+
+  hadoop-secondarynamenode:
+    <<: *hadoop-common
+    container_name: hadoop-secondarynamenode
+    hostname: hadoop-secondarynamenode
+    depends_on:
+      - hadoop-namenode
+    volumes:
+      - ./conf/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./conf/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./conf/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml
+      - ./conf/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml
+      - ./conf/hadoop/workers:/opt/hadoop/etc/hadoop/workers
+      - ./scripts/hadoop/:/scripts/
+      - secondary-namenode-data:/data/dfs/secondaryNameNode
+      - datanode1-data:/data/dfs/dataNode
+    ports:
+      - "9868:9868"     # HDFS SecondaryNameNode Web UI
+      - "9864:9864"     # HDFS DataNode Web UI
+      - "8042:8042"     # YARN NodeManager Web UI
+    command: ["/bin/bash", "/scripts/hadoop-init-secondarynamenode.sh"]
+
+  hadoop-datanode:
+    <<: *hadoop-common
+    container_name: hadoop-datanode
+    hostname: hadoop-datanode
+    depends_on:
+      - hadoop-namenode
+    volumes:
+      - ./conf/hadoop/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml
+      - ./conf/hadoop/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml
+      - ./conf/hadoop/mapred-site.xml:/opt/hadoop/etc/hadoop/mapred-site.xml
+      - ./conf/hadoop/yarn-site.xml:/opt/hadoop/etc/hadoop/yarn-site.xml
+      - ./conf/hadoop/workers:/opt/hadoop/etc/hadoop/workers
+      - ./scripts/hadoop/:/scripts/
+      - datanode2-data:/data/dfs/dataNode
+    ports:
+      - "9865:9864"     # HDFS DataNode Web UI
+      - "8043:8042"     # YARN NodeManager Web UI
+    command: ["/bin/bash", "/scripts/hadoop-init-datanode.sh"]
